@@ -2,8 +2,6 @@ import asyncio
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from bidict import bidict
-
 from hummingbot.connector.constants import s_decimal_NaN
 from hummingbot.connector.exchange.bithumb import (
     bithumb_constants as CONSTANTS,
@@ -15,7 +13,6 @@ from hummingbot.connector.exchange.bithumb.bithumb_api_user_stream_data_source i
 from hummingbot.connector.exchange.bithumb.bithumb_auth import BithumbAuth
 from hummingbot.connector.exchange_py_base import ExchangePyBase
 from hummingbot.connector.trading_rule import TradingRule
-from hummingbot.connector.utils import TradeFillOrderDetails, combine_to_hb_trading_pair
 from hummingbot.core.data_type.common import OrderType, TradeType
 from hummingbot.core.data_type.in_flight_order import InFlightOrder, OrderUpdate, TradeUpdate
 from hummingbot.core.data_type.order_book_tracker_data_source import OrderBookTrackerDataSource
@@ -249,6 +246,7 @@ class BithumbExchange(ExchangePyBase):
             ]
         }
         """
+        self.logger().error("Bithumb format_trading_rules ..")
         trading_pair_rules = exchange_info_dict.get("symbols", [])
         retval = []
         for rule in filter(bithumb_utils.is_exchange_information_valid, trading_pair_rules):
@@ -530,11 +528,13 @@ class BithumbExchange(ExchangePyBase):
             del self._account_balances[asset_name]
 
     def _initialize_trading_pair_symbols_from_exchange_info(self, exchange_info: Dict[str, Any]):
-        mapping = bidict()
-        for symbol_data in filter(bithumb_utils.is_exchange_information_valid, exchange_info["symbols"]):
-            mapping[symbol_data["symbol"]] = combine_to_hb_trading_pair(base=symbol_data["baseAsset"],
-                                                                        quote=symbol_data["quoteAsset"])
-        self._set_trading_pair_symbol_map(mapping)
+        markets = exchange_info
+        self.logger().error(f"Bithumb exchange info processing ..")
+
+        for market in markets:
+            self.logger().error(f"Processing market {market}")
+
+
 
     async def _get_last_traded_price(self, trading_pair: str) -> float:
         params = {
