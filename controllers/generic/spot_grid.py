@@ -6,7 +6,7 @@ from pydantic import Field
 from hummingbot.data_feed.candles_feed.data_types import CandlesConfig
 from hummingbot.strategy_v2.controllers import ControllerBase, ControllerConfigBase
 from hummingbot.strategy_v2.executors.data_types import ConnectorPair
-from hummingbot.strategy_v2.executors.grid_executor.data_types import GridExecutorConfig
+from hummingbot.strategy_v2.executors.spot_grid_executor.data_types import SpotGridExecutorConfig
 from hummingbot.strategy_v2.models.executor_actions import CreateExecutorAction, ExecutorAction
 from hummingbot.strategy_v2.models.executors_info import ExecutorInfo
 
@@ -87,7 +87,7 @@ class SpotGrid(ControllerBase):
         if len(self.active_executors()) == 0:
             return [CreateExecutorAction(
                 controller_id=self.config.id,
-                executor_config=GridExecutorConfig(
+                executor_config=SpotGridExecutorConfig(
                     timestamp=self.market_data_provider.time(),
                     connector_name=self.config.connector_name,
                     trading_pair=self.config.trading_pair,
