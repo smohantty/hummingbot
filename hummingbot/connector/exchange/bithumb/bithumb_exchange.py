@@ -513,13 +513,12 @@ class BithumbExchange(ExchangePyBase):
             path_url=CONSTANTS.ACCOUNTS_PATH_URL,
             is_auth_required=True)
 
-        balances = account_info["balances"]
-        for balance_entry in balances:
-            asset_name = balance_entry["asset"]
-            free_balance = Decimal(balance_entry["free"])
-            total_balance = Decimal(balance_entry["free"]) + Decimal(balance_entry["locked"])
-            self._account_available_balances[asset_name] = free_balance
-            self._account_balances[asset_name] = total_balance
+        for info in account_info:
+            asset_name = info["currency"]
+            locked = Decimal(info["locked"])
+            total = Decimal(info["balance"])
+            self._account_available_balances[asset_name] = total - locked
+            self._account_balances[asset_name] = total
             remote_asset_names.add(asset_name)
 
         asset_names_to_remove = local_asset_names.difference(remote_asset_names)

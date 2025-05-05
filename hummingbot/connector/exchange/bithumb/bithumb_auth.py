@@ -1,9 +1,14 @@
 import hashlib
-import hmac
 import json
-import time
 import uuid
-from typing import Dict
+from collections import OrderedDict
+from typing import Any, Dict
+from urllib.parse import urlencode
+
+from hummingbot.connector.time_synchronizer import TimeSynchronizer
+from hummingbot.core.web_assistant.auth import AuthBase
+from hummingbot.core.web_assistant.connections.data_types import RESTMethod, RESTRequest, WSRequest
+
 
 import jwt
 
@@ -21,27 +26,40 @@ class BithumbAuth(AuthBase):
         self._secret_key = secret_key
         self._time_provider = time_provider
 
-    def _generate_signature(self, params: Dict) -> str:
-        """
-        Generates authentication signature for API requests
-        """
-        encoded_params = json.dumps(params).encode()
-        signature = hmac.new(self._secret_key.encode(),
-                             encoded_params,
-                             hashlib.sha512).hexdigest()
-        return signature
-
     async def rest_authenticate(self, request: RESTRequest) -> RESTRequest:
         """
-        Adds authentication to REST request
+        Adds the server time and the signature to the request, required for authenticated interactions. It also adds
+        the required parameter in the request header.
+        :param request: the request to be configured for authenticated interaction
         """
-        headers = {
-            "Api-Key": self._api_key,
-            "Api-Sign": self._generate_signature(request.params),
-            "Api-Nonce": str(int(time.time() * 1000))
+        hash = hashlib.sha512()
+
+        if request.method == RESTMethod.POST:
+            hash.update(urlencode(json.loads(request.data)).encode())
+        else:
+            hash.update(urlencode(request.params).encode())
+
+        query_hash = hash.hexdigest()
+
+        timestamp = int(self._time_provider.time() * 1e3)
+
+        payload = {
+            'access_key': self.api_key,
+            'nonce': str(uuid.uuid4()),
+            'timestamp': timestamp,
+            'query_hash': query_hash,
+            'query_hash_alg': 'SHA512',
         }
+
+        jwt_token = jwt.encode(payload, self._secret_key)
+        authorization_token = 'Bearer {}'.format(jwt_token)
+
+        headers = {}
+        if request.headers is not None:
+            headers.update(request.headers)
+        headers.update({'Authorization': authorization_token})
         request.headers = headers
-        return request
+
 
     async def ws_authenticate(self, request: WSRequest) -> WSRequest:
         """

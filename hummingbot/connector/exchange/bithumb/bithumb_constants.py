@@ -24,7 +24,7 @@ SNAPSHOT_PATH_URL = "/depth"
 SERVER_TIME_PATH_URL = "/candles/minutes/1"
 
 # Private API endpoints or BinanceClient function
-ACCOUNTS_PATH_URL = "/account"
+ACCOUNTS_PATH_URL = "/accounts"
 MY_TRADES_PATH_URL = "/myTrades"
 ORDER_PATH_URL = "/order"
 BINANCE_USER_STREAM_PATH_URL = "/userDataStream"
