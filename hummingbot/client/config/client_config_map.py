@@ -609,6 +609,11 @@ class TegroRateSourceMode(ExchangeRateSourceModeBase):
     model_config = ConfigDict(title="tegro")
 
 
+class BithumbRateSourceMode(ExchangeRateSourceModeBase):
+    name: str = Field(default="bithumb")
+    model_config = ConfigDict(title="bithumb")
+
+
 RATE_SOURCE_MODES = {
     AscendExRateSourceMode.model_config["title"]: AscendExRateSourceMode,
     BinanceRateSourceMode.model_config["title"]: BinanceRateSourceMode,
@@ -624,6 +629,7 @@ RATE_SOURCE_MODES = {
     DeriveRateSourceMode.model_config["title"]: DeriveRateSourceMode,
     TegroRateSourceMode.model_config["title"]: TegroRateSourceMode,
     MexcRateSourceMode.model_config["title"]: MexcRateSourceMode,
+    BithumbRateSourceMode.model_config["title"]: BithumbRateSourceMode,
 }
 
 

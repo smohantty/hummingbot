@@ -45,6 +45,7 @@ class BithumbExchange(ExchangePyBase):
         self._domain = domain
         self._trading_required = trading_required
         self._trading_pairs = trading_pairs
+        self._available_trading_pairs = []
         self._last_trades_poll_bithumb_timestamp = 1.0
         super().__init__(client_config_map)
 
@@ -111,8 +112,29 @@ class BithumbExchange(ExchangePyBase):
         return [OrderType.LIMIT, OrderType.LIMIT_MAKER, OrderType.MARKET]
 
     async def get_all_pairs_prices(self) -> List[Dict[str, str]]:
-        pairs_prices = await self._api_get(path_url=CONSTANTS.TICKER_BOOK_PATH_URL)
-        return pairs_prices
+        if (len(self._available_trading_pairs) == 0):
+            self._available_trading_pairs = ["KRW-BTC", "KRW-ETH", "KRW-SOL"]
+
+        market_names = ",".join(self._available_trading_pairs)
+        market_param = f"markets={market_names}"
+
+
+        pairs_prices = await self._api_get(
+            path_url=CONSTANTS.TICKER_BOOK_PATH_URL,
+            params=market_param
+            )
+
+        result = []
+        for item in pairs_prices:
+            orderbook = item.get("orderbook_units", [])
+            if orderbook:
+                result.append({
+                    "symbol": item.get("market"),
+                    "bidPrice": orderbook[0].get("bid_price"),
+                    "askPrice": orderbook[0].get("ask_price")
+                })
+
+        return result
 
     def _is_request_exception_related_to_time_synchronizer(self, request_exception: Exception):
         error_description = str(request_exception)
@@ -527,15 +549,14 @@ class BithumbExchange(ExchangePyBase):
             del self._account_balances[asset_name]
 
     def _initialize_trading_pair_symbols_from_exchange_info(self, exchange_info: Dict[str, Any]):
-        markets = exchange_info
-        self.logger().error(f"Bithumb exchange info processing ..")
+        self._available_trading_pairs = []
 
-        for market in markets:
-            self.logger().error(f"Processing market {market}")
+        self._available_trading_pairs = [info['market'] for info in exchange_info]
 
 
 
     async def _get_last_traded_price(self, trading_pair: str) -> float:
+        self.logger().error(f"Bithumb _get_last_traded_price {trading_pair}")
         params = {
             "symbol": await self.exchange_symbol_associated_to_pair(trading_pair=trading_pair)
         }
